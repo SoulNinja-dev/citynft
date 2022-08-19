@@ -23,6 +23,9 @@ contract City is ERC721, PullPayment, Ownable {
     baseTokenURI = "https://bafybeihqgz7fqruizwhsrxlxwcvsmankd7wth5lr5d2zfzm3mmcsj7wvvu.ipfs.nftstorage.link/metadata/";
   }
 
+  // @dev mint token from next tokenId
+  // @dev can only mint once in 24 hours
+  // @dev accept value from user instead of using a mint price
   function mintTo(address recipient) public payable returns (uint256) {
     uint256 tokenId = currentTokenId.current();
     require(tokenId < TOTAL_SUPPLY, "Max supply reached");
