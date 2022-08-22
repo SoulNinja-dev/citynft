@@ -1,7 +1,6 @@
 const { ethers } = require("hardhat");
 
 const main = async () => {
-  const [owner] = await hre.ethers.getSigners();
   const cityFactory = await hre.ethers.getContractFactory("City");
   const cityContract = await cityFactory.deploy();
 

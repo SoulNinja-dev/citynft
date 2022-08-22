@@ -2,41 +2,54 @@
 const { Contract } = require("ethers");
 const { ethers } = require("hardhat");
 const CityAbi = require("./City.json");
+const { SequenceIndexerClient } = require("@0xsequence/indexer");
+const indexer = new SequenceIndexerClient(
+  "https://rinkeby-indexer.sequence.app/"
+);
+
+const CONTRACT_ADDRESS = "0x50DD7a0EBCE3E336e896df3b30Ad7fC0480677a3";
+// const CONTRACT_ADDRESS = "0x5FbDB2315678afecb367f032d93F642f64180aa3";
 
 const main = async () => {
   const [owner] = await hre.ethers.getSigners();
   // const cityFactory = await hre.ethers.getContractFactory("City");
   // const cityContract = await cityFactory.deploy();
-  const abi = CityAbi.abi;
-  const cityContract = new Contract(
-    "0xe7dac11acd0a04b6c8daa37d3d6223ba301d418a",
-    abi,
-    owner
-  );
 
+  const abi = CityAbi.abi;
+  const cityContract = new Contract(CONTRACT_ADDRESS, abi, owner);
   console.log("Contract deployed to:", cityContract.address);
-  const city = await cityContract.mintTo(
+
+  const city1 = await cityContract.mintTo(
     owner.address,
-    ethers.utils.parseEther("0.03"),
+    ethers.utils.parseEther("0.01"),
     {
       gasLimit: 500000,
-      value: ethers.utils.parseEther("0.03"),
+      value: ethers.utils.parseEther("0.01"),
     }
   );
-  console.log(`City minted to ${owner.address} @ ${city.hash}`);
+  console.log(`City minted to ${owner.address} @ ${city1.hash}`);
 
-  // get value returned by cityContract.mintTo
-  const cityItemId = await city.wait();
-  console.log(cityItemId);
+  const currentTokenId = await cityContract.getCurrentToken();
+  console.log(`currentTokenId: ${currentTokenId}`);
+};
 
-  console.log(city);
-  const value = await cityContract.getTokenValue(1);
-  console.log(`token value: ${value}`);
+// get tokens owned by [address];
+const getTokensOwnedByAddress = async () => {
+  const tokenids = await indexer.getTokenBalances({
+    accountAddress: "0x9503C1A5440F92190fE9035B01BF8d5159ea106f",
+    contractAddress: CONTRACT_ADDRESS,
+    includeMetadata: true,
+  });
+  return tokenids;
 };
 
 const runMain = async () => {
   try {
-    await main();
+    // await main();
+    const tokenids = await getTokensOwnedByAddress();
+    tokenids.balances.forEach((token) => {
+      console.log(token.tokenMetadata);
+    });
     process.exit(0); // exit Node process without error
   } catch (error) {
     console.log(error);
@@ -45,3 +58,9 @@ const runMain = async () => {
 };
 
 runMain();
+
+/*
+find out how to start and stop money stream
+link it to walletId tokenId
+if someone else buys that (then stop that stream and switch it over to this new guy)
+*/

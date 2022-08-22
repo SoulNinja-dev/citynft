@@ -7,9 +7,13 @@ require("dotenv").config(".env");
 module.exports = {
   solidity: "0.8.4",
   networks: {
-    goerli: {
+    // goerli: {
+    //   url: process.env.NODE_API_URL,
+    //   accounts: [process.env.GOERLI_PRIVATE_KEY],
+    // },
+    rinkeby: {
       url: process.env.NODE_API_URL,
-      accounts: [process.env.GOERLI_PRIVATE_KEY],
+      accounts: [process.env.RINKEBY_PRIVATE_KEY],
     },
   },
 };
