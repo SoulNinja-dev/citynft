@@ -9,13 +9,8 @@ import "@openzeppelin/contracts/access/Ownable.sol";
 import "hardhat/console.sol";
 
 contract City is ERC721, PullPayment, Ownable {
-    using Counters for Counters.Counter;
-
     // Constants
     uint256 public constant TOTAL_SUPPLY = 10000;
-
-    /// @dev this private currentTokenId returns the current token the mint is at
-    Counters.Counter private currentTokenId;
 
     /// @dev Base token URI used as a prefix by tokenURI().
     string public baseTokenURI;
@@ -30,16 +25,17 @@ contract City is ERC721, PullPayment, Ownable {
         baseTokenURI = "https://bafybeihqgz7fqruizwhsrxlxwcvsmankd7wth5lr5d2zfzm3mmcsj7wvvu.ipfs.nftstorage.link/metadata/";
     }
 
-    /// @dev mint token from next tokenId
+    /// @dev mint token from tokenId passed by the user
     /// @dev can only mint once in 24 hours
     /// @dev accept value from user instead of using a mint price
-    function mintTo(address recipient, uint256 value)
-        public
-        payable
-        returns (uint256)
-    {
-        uint256 tokenId = currentTokenId.current();
-        require(tokenId < TOTAL_SUPPLY, "Max supply reached");
+    function mint(
+        address recipient,
+        uint256 value,
+        uint256 tokenId
+    ) public payable returns (uint256) {
+        require(tokenId < TOTAL_SUPPLY, "Only 10k tokens available");
+        require(tokenId > 0, "TokenId must be greater than 0");
+        require(!_exists(tokenId), "TokenId already exists");
         require(
             msg.value == value,
             "Transaction value did not equal the value given"
@@ -54,12 +50,11 @@ contract City is ERC721, PullPayment, Ownable {
             timediff >= 30,
             "Need atleast 24 hour gap between mints"
         );
-        currentTokenId.increment();
-        uint256 newItemId = currentTokenId.current();
-        _safeMint(recipient, newItemId);
-        tokenValue[newItemId] = value;
+
+        _safeMint(recipient, tokenId);
+        tokenValue[tokenId] = value;
         lastMint = block.timestamp;
-        return newItemId;
+        return tokenId;
     }
 
     /// @dev Returns an URI for a given token ID
@@ -85,10 +80,5 @@ contract City is ERC721, PullPayment, Ownable {
     /// @dev Get the minted token values
     function getTokenValue(uint256 tokenId) public view returns (uint256) {
         return tokenValue[tokenId];
-    }
-
-    /// @dev Get the current tokenId
-    function getCurrentToken() public view returns (uint256) {
-        return currentTokenId.current();
     }
 }

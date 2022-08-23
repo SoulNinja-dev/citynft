@@ -7,30 +7,24 @@ const indexer = new SequenceIndexerClient(
   "https://rinkeby-indexer.sequence.app/"
 );
 
-const CONTRACT_ADDRESS = "0x50DD7a0EBCE3E336e896df3b30Ad7fC0480677a3";
-// const CONTRACT_ADDRESS = "0x5FbDB2315678afecb367f032d93F642f64180aa3";
+const CONTRACT_ADDRESS = "0x54988b724aeb4d04e3e9c2Ce811D366D6EFfA8e7";
 
 const main = async () => {
   const [owner] = await hre.ethers.getSigners();
-  // const cityFactory = await hre.ethers.getContractFactory("City");
-  // const cityContract = await cityFactory.deploy();
-
   const abi = CityAbi.abi;
   const cityContract = new Contract(CONTRACT_ADDRESS, abi, owner);
   console.log("Contract deployed to:", cityContract.address);
 
-  const city1 = await cityContract.mintTo(
+  const city = await cityContract.mint(
     owner.address,
-    ethers.utils.parseEther("0.08"),
+    ethers.utils.parseEther("0.01"),
+    6969,
     {
       gasLimit: 500000,
-      value: ethers.utils.parseEther("0.08"),
+      value: ethers.utils.parseEther("0.01"),
     }
   );
-  console.log(`City minted to ${owner.address} @ ${city1.hash}`);
-
-  const currentTokenId = await cityContract.getCurrentToken();
-  console.log(`currentTokenId: ${currentTokenId}`);
+  console.log(`City minted to ${owner.address} @ ${city.hash}`);
 };
 
 // get tokens owned by [address];

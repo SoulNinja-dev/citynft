@@ -3,18 +3,20 @@ import { FunctionComponent, useState } from 'react'
 import ErrorCard from './ErrorCard'
 import NFTcard from './NFTcard'
 import City from './City.json'
-import { useContract, useSigner } from 'wagmi'
+import { useAccount, useContract, useSigner } from 'wagmi'
 import { BigNumber, ethers } from 'ethers'
 
 interface Props {}
 
 const SearchNFT: FunctionComponent<Props> = () => {
 	const { data: signer, isError, isLoading } = useSigner()
+	const { address } = useAccount()
 	const [tokenId, setTokenId] = useState('')
 	const [buyormint, setBuyOrMint] = useState('')
 	const [value, setValue] = useState('')
 	const [image, setImage] = useState('')
 	const [owner, setOwner] = useState('')
+	const [newValue, setNewValue] = useState('')
 
 	const [showError, setShowError] = useState(false)
 	const [errorText, setErrorText] = useState('no error')
@@ -22,7 +24,7 @@ const SearchNFT: FunctionComponent<Props> = () => {
 
 	const abi = City.abi
 	const contract = useContract({
-		addressOrName: '0x50DD7a0EBCE3E336e896df3b30Ad7fC0480677a3',
+		addressOrName: '0x54988b724aeb4d04e3e9c2Ce811D366D6EFfA8e7',
 		contractInterface: abi,
 		signerOrProvider: signer,
 	})
@@ -89,6 +91,35 @@ const SearchNFT: FunctionComponent<Props> = () => {
 		setShowCard(true)
 	}
 
+	const handleMintBuy = async e => {
+		if (!newValue.match(/^-?\d+\.?\d*$/)) {
+			setErrorText('Need to set new value')
+			setShowError(true)
+			setShowCard(false)
+			return
+		}
+		console.log(newValue)
+		if (buyormint === 'mint') {
+			mint()
+		} else {
+			buy()
+		}
+	}
+
+	const mint = async () => {
+		if (address) {
+			const city = await contract.mint(address, ethers.utils.parseEther(newValue), tokenId, {
+				gasLimit: 500000,
+				value: ethers.utils.parseEther(newValue),
+			})
+			console.log(city)
+		}
+	}
+
+	const buy = async () => {
+		console.log('buy')
+	}
+
 	const reduceAddr = addr => {
 		return addr.substring(0, 5) + '...' + addr.substring(addr.length - 5)
 	}
@@ -128,7 +159,16 @@ const SearchNFT: FunctionComponent<Props> = () => {
 
 			<div className="mt-10">
 				{showCard ? (
-					<NFTcard buyormint={buyormint} value={value} token={tokenId} image={image} owner={owner} />
+					<NFTcard
+						buyormint={buyormint}
+						value={value}
+						token={tokenId}
+						image={image}
+						owner={owner}
+						onClickCallBack={handleMintBuy}
+						setNewValue={setNewValue}
+						newValue={newValue}
+					/>
 				) : null}
 				{showError ? <ErrorCard text={errorText} /> : null}
 			</div>
