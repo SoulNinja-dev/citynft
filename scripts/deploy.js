@@ -16,5 +16,4 @@ const runMain = async () => {
     process.exit(1); // exit Node process while indicating 'Uncaught Fatal Exception' error
   }
 };
-
 runMain();

@@ -1,14 +1,79 @@
+import axios from 'axios'
 import { FunctionComponent, useState } from 'react'
+import ErrorCard from './ErrorCard'
+import NFTcard from './NFTcard'
+import City from './City.json'
+import { useContract, useSigner } from 'wagmi'
 
-interface Props {
-	sendDataToParent: (tokenId: string) => void
-}
+interface Props {}
 
-const SearchNFT: FunctionComponent<Props> = ({ sendDataToParent }) => {
+const SearchNFT: FunctionComponent<Props> = () => {
+	const { data: signer, isError, isLoading } = useSigner()
 	const [tokenId, setTokenId] = useState('')
+	const [buyormint, setBuyOrMint] = useState('')
+	const [value, setValue] = useState('')
+	const [image, setImage] = useState('')
+
+	const [showError, setShowError] = useState(false)
+	const [errorText, setErrorText] = useState('no error')
+	const [showCard, setShowCard] = useState(false)
+
+	const abi = City.abi
+	const contract = useContract({
+		addressOrName: '0x50DD7a0EBCE3E336e896df3b30Ad7fC0480677a3',
+		contractInterface: abi,
+		signerOrProvider: signer,
+	})
+
+	const handleSearch = async e => {
+		e.preventDefault()
+		console.log(`token id being searched ${tokenId}`)
+
+		// validate if tokenId is just numbers between 1 and 10000
+		if (tokenId.match(/^[0-9]{1,4}$/)) {
+			console.log('token id is valid')
+			setErrorText('')
+			setShowError(false)
+		} else {
+			console.log('token id is invalid')
+			setShowError(true)
+			setErrorText('token id is invalid')
+			setShowCard(false)
+			return
+		}
+
+		/*
+			- get metadata for token id
+			- call contract to check if token is minted
+				- if minted, get value and owner
+				- show buy option with higher value
+			- if not minted, show mint button 
+		*/
+
+		// get metadata for token id
+		const metadata = await axios
+			.get(
+				`https://bafybeihqgz7fqruizwhsrxlxwcvsmankd7wth5lr5d2zfzm3mmcsj7wvvu.ipfs.nftstorage.link/metadata/${tokenId}`
+			)
+			.catch(err => {
+				console.log(err)
+				setShowError(true)
+				setErrorText(err.error.message)
+			})
+			// @ts-ignore
+			.then(res => res.data)
+		setImage(metadata.image)
+
+		// check if token is minted
+		const owner = await contract.ownerOf(tokenId).catch(err => {
+			return null
+		})
+		setBuyOrMint(owner ? 'mint' : 'buy')
+		setShowCard(true)
+	}
 
 	return (
-		<section className="relative w-full max-w-md px-5 py-4 mx-auto rounded-md">
+		<section className="relative w-full rounded-md">
 			<div className="relative">
 				<span className="absolute inset-y-0 left-0 flex items-center pl-3">
 					<svg className="w-5 h-5 text-gray-400" viewBox="0 0 24 24" fill="none">
@@ -31,15 +96,18 @@ const SearchNFT: FunctionComponent<Props> = ({ sendDataToParent }) => {
 							setTokenId(e.target.value)
 						}}
 					/>
-					<input
-						type="button"
-						value="Submit"
+					<button
 						className="bg-white border rounded-md dark:bg-gray-800 dark:text-gray-300 dark:border-gray-600 focus:border-blue-500 dark:focus:border-blue-500 focus:outline-none focus:ring p-3"
-						onClick={e => {
-							sendDataToParent(tokenId)
-						}}
-					/>
+						onClick={handleSearch}
+					>
+						Submit
+					</button>
 				</div>
+			</div>
+
+			<div className="mt-10">
+				{showCard ? <NFTcard buyormint={buyormint} value={value} token={tokenId} image={image} /> : null}
+				{showError ? <ErrorCard text={errorText} /> : null}
 			</div>
 		</section>
 	)
