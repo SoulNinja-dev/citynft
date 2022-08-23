@@ -21,10 +21,10 @@ const main = async () => {
 
   const city1 = await cityContract.mintTo(
     owner.address,
-    ethers.utils.parseEther("0.01"),
+    ethers.utils.parseEther("0.08"),
     {
       gasLimit: 500000,
-      value: ethers.utils.parseEther("0.01"),
+      value: ethers.utils.parseEther("0.08"),
     }
   );
   console.log(`City minted to ${owner.address} @ ${city1.hash}`);
@@ -45,11 +45,11 @@ const getTokensOwnedByAddress = async () => {
 
 const runMain = async () => {
   try {
-    // await main();
-    const tokenids = await getTokensOwnedByAddress();
-    tokenids.balances.forEach((token) => {
-      console.log(token.tokenMetadata);
-    });
+    await main();
+    // const tokenids = await getTokensOwnedByAddress();
+    // tokenids.balances.forEach((token) => {
+    //   console.log(token.tokenMetadata);
+    // });
     process.exit(0); // exit Node process without error
   } catch (error) {
     console.log(error);

@@ -4,6 +4,7 @@ import ErrorCard from './ErrorCard'
 import NFTcard from './NFTcard'
 import City from './City.json'
 import { useContract, useSigner } from 'wagmi'
+import { BigNumber, ethers } from 'ethers'
 
 interface Props {}
 
@@ -13,6 +14,7 @@ const SearchNFT: FunctionComponent<Props> = () => {
 	const [buyormint, setBuyOrMint] = useState('')
 	const [value, setValue] = useState('')
 	const [image, setImage] = useState('')
+	const [owner, setOwner] = useState('')
 
 	const [showError, setShowError] = useState(false)
 	const [errorText, setErrorText] = useState('no error')
@@ -68,8 +70,27 @@ const SearchNFT: FunctionComponent<Props> = () => {
 		const owner = await contract.ownerOf(tokenId).catch(err => {
 			return null
 		})
-		setBuyOrMint(owner ? 'mint' : 'buy')
+		setBuyOrMint(owner ? 'buy' : 'mint')
+		setOwner(owner ? reduceAddr(owner) : null)
+
+		// get value of tokenId
+		if (owner) {
+			const value = await contract.getTokenValue(tokenId).catch(err => {
+				return null
+			})
+			if (value) {
+				const ethval = ethers.utils.formatEther(value)
+				setValue(ethval)
+			} else {
+				setValue(null)
+			}
+		}
+
 		setShowCard(true)
+	}
+
+	const reduceAddr = addr => {
+		return addr.substring(0, 5) + '...' + addr.substring(addr.length - 5)
 	}
 
 	return (
@@ -106,7 +127,9 @@ const SearchNFT: FunctionComponent<Props> = () => {
 			</div>
 
 			<div className="mt-10">
-				{showCard ? <NFTcard buyormint={buyormint} value={value} token={tokenId} image={image} /> : null}
+				{showCard ? (
+					<NFTcard buyormint={buyormint} value={value} token={tokenId} image={image} owner={owner} />
+				) : null}
 				{showError ? <ErrorCard text={errorText} /> : null}
 			</div>
 		</section>
